@@ -14,8 +14,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 扫码登录
+ * 
+ * @author eason
+ * @date 2021/11/20
+ */
 public class Login {
 
+    /**
+     * 请求头
+     */
     static Map<String, List<String>> requestHeaders = new HashMap<String, List<String>>(16);
     static String ticket = "";
 
@@ -34,28 +43,35 @@ public class Login {
         String token = cookies.split("wlfstk_smdl=")[1];
         headers.put("Cookie", cookies);
         while (true) {
-            String checkUrl = "https://qr.m.jd.com/check?appid=133&callback=jQuery" + (int) ((Math.random() * (9999999 - 1000000 + 1)) + 1000000) + "&token=" + token + "&_=" + System.currentTimeMillis();
+            String checkUrl = "https://qr.m.jd.com/check?appid=133&callback=jQuery"
+                + (int)((Math.random() * (9999999 - 1000000 + 1)) + 1000000) + "&token=" + token + "&_="
+                + System.currentTimeMillis();
             String qrCode = HttpUrlConnectionUtil.get(headers, checkUrl);
             if (qrCode.indexOf("二维码未扫描") != -1) {
                 System.out.println("二维码未扫描，请扫描二维码登录");
             } else if (qrCode.indexOf("请手机客户端确认登录") != -1) {
                 System.out.println("请手机客户端确认登录");
             } else {
-                ticket = qrCode.split("\"ticket\" : \"")[1].split("\"\n" +
-                        "}\\)")[0];
-                System.out.println("已完成二维码扫描登录");
+                ticket = qrCode.split("\"ticket\" : \"")[1].split("\"\n" + "}\\)")[0];
+                System.out.println("已完成二维码扫描登录" + ticket);
                 close();
                 break;
             }
             Thread.sleep(3000);
         }
-	String qrCodeTicketValidation = HttpUrlConnectionUtil.get(headers, "https://passport.jd.com/uc/qrCodeTicketValidation?t=" + ticket);
+        String qrCodeTicketValidation =
+            HttpUrlConnectionUtil.get(headers, "https://passport.jd.com/uc/qrCodeTicketValidation?t=" + ticket);
         stringListMap = Start.manager.get(url, requestHeaders);
         cookieList = stringListMap.get("Cookie");
         cookies = cookieList.get(0).toString();
         headers.put("Cookie", cookies);
     }
 
+    /**
+     * 关闭扫描码
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public static void close() throws IOException, InterruptedException {
         WinDef.HWND hWnd;
         final User32 user32 = User32.INSTANCE;
@@ -68,7 +84,7 @@ public class Login {
                 if (wText.isEmpty()) {
                     return true;
                 }
-                if (wText.contains("照片")) {
+                if (wText.contains("照片") || wText.contains("QCode")) {
                     hWnd = User32.INSTANCE.FindWindow(null, wText);
                     WinDef.LRESULT lresult = User32.INSTANCE.SendMessage(hWnd, 0X10, null, null);
                 }
