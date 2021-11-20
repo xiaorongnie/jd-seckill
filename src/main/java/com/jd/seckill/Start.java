@@ -54,14 +54,19 @@ public class Start {
             String buyDate = JSONObject.parseObject(shopDetail.get("yuyueInfo").toString()).get("buyTime").toString();
             String startDate = buyDate.split("-202")[0] + ":00";
             System.out.println("抢购时间为：" + startDate);
-            Long startTime = HttpUrlConnectionUtil.dateToTime(startDate);
+            long startTime = HttpUrlConnectionUtil.dateToTime(startDate);
             while (true) {
                 JSONObject jdTime = JSONObject.parseObject(HttpUrlConnectionUtil.get(headers,
                     "https://api.m.jd.com/client.action?functionId=queryMaterialProducts&client=wh5"));
-                Long serverTime = Long.valueOf(jdTime.get("currentTime2").toString());
+                long serverTime = Long.valueOf(jdTime.get("currentTime2").toString());
                 if (startTime >= serverTime) {
-                    System.out.println("正在等待抢购时间");
-                    Thread.sleep(300);
+                    System.out.println(String.format("距离抢购时间: %d分钟", (startTime - serverTime) / 60000));
+                    // 3分钟以上3秒请求一次. 3分钟以内0.3秒请求一次
+                    if (startTime - serverTime > 180000) {
+                        Thread.sleep(3000);
+                    } else {
+                        Thread.sleep(300);
+                    }
                 } else {
                     break;
                 }
